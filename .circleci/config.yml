@@ -1,0 +1,63 @@
+# This config is equivalent to both the '.circleci/extended/orb-free.yml' and the base '.circleci/config.yml'
+version: 2.1
+
+# Orbs are reusable packages of CircleCI configuration that you may share across projects, enabling you to create encapsulated, parameterized commands, jobs, and executors that can be used across multiple projects.
+# See: https://circleci.com/docs/2.0/orb-intro/
+orbs:
+  node: circleci/node@4.7
+  aws-ecr: circleci/aws-ecr@7.3.0
+  aws-cli: circleci/aws-cli@2.0.6
+
+jobs:
+  pull-and-run-from-ecr:
+    executor: aws-cli/default
+    parameters:
+      aws-ec2-elastic-ip:
+        default: AWS_EC2_ELASTIC_IP
+        type: env_var_name
+      aws-region:
+        default: AWS_REGION
+        type: env_var_name
+      aws-ecr-account-url:
+        default: AWS_ECR_ACCOUNT_URL
+        type: env_var_name
+      circle-sha1:
+        default: CIRCLE_SHA1
+        type: env_var_name
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "f0:4f:a7:92:95:f3:68:e9:3a:2f:35:af:41:2c:ae:01"
+      - run:
+          name: Call deploy script on EC2
+          no_output_timeout: 30s
+          command: |
+            export AWS_REGION=$<< parameters.aws-region >>
+            export ECR_URL=$<< parameters.aws-ecr-account-url >>
+            export SHA=$<< parameters.circle-sha1 >>
+            
+            echo AWS_REGION : ${AWS_REGION}
+            echo ECR_URL    : ${ECR_URL}
+            echo SHA        : ${SHA}
+
+            ssh -o "StrictHostKeyChecking no" -tt ec2-user@$<< parameters.aws-ec2-elastic-ip >> \<<- EOF
+              scripts/pull_and_start_image.sh ${AWS_REGION} ${ECR_URL} patrickmartinezportfolio ${SHA}
+              logout
+            EOF
+
+workflows:
+  test-client-app:
+    jobs:
+      - node/test:
+          app-dir: app/
+  build-and-push-client-app:
+    jobs:
+      - aws-ecr/build-and-push-image:
+          context: AWS
+          path: app/
+          repo: patrickmartinezportfolio
+          tag: latest,${CIRCLE_SHA1}
+      - pull-and-run-from-ecr:
+          context: AWS
+          requires:
+            - aws-ecr/build-and-push-image
