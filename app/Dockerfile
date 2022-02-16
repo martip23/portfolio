@@ -1,5 +1,5 @@
 # build stage
-FROM node:lts-alpine as build-stage
+FROM mpneuried/nodejs-alpine-buildtools-gm as build-stage
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
