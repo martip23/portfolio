@@ -1,5 +1,5 @@
 # PatrickMartinez.us Website
-
+[![CircleCI](https://circleci.com/gh/martip23/portfolio/tree/portfolio.svg?style=svg)](https://circleci.com/gh/martip23/portfolio/tree/portfolio)
 The code used to write/deploy patrickmartinez.us
 
 ## Features
