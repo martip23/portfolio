@@ -11,6 +11,9 @@
 # production
 /build
 
+# content
+#/src/store/reducers/myReducer.js
+
 # misc
 .DS_Store
 .env.local
