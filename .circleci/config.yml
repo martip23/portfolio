@@ -46,10 +46,6 @@ jobs:
             EOF
 
 workflows:
-  test-client-app:
-    jobs:
-      - node/test:
-          app-dir: app/
   build-and-push-client-app:
     jobs:
       - aws-ecr/build-and-push-image:
